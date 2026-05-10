@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Pledge · Impact Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5f0e8;
+    --dark: #1a1a14;
+    --olive: #4a5240;
+    --sage: #7d9070;
+    --accent: #c8622a;
+    --soft: #e8e2d4;
+    --muted: #8a8478;
+    --white: #fdfcf8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--cream);
+    color: var(--dark);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .hero {
+    background: var(--dark); color: var(--cream);
+    padding: 80px 40px 60px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 60%, rgba(122,144,112,0.25) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(200,98,42,0.15) 0%, transparent 50%);
+  }
+  .hero-eyebrow { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--sage); margin-bottom: 20px; position: relative; }
+  .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 400; line-height: 1.15; position: relative; max-width: 700px; margin: 0 auto 20px; }
+  .hero h1 em { font-style: italic; color: var(--sage); }
+  .hero-sub { color: #a09a8e; font-size: 1rem; max-width: 500px; margin: 0 auto; position: relative; }
+
+  .progress-wrap { background: var(--soft); padding: 16px 40px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #ddd7c8; }
+  .progress-label { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); white-space: nowrap; font-weight: 400; }
+  .progress-bar-outer { flex: 1; height: 4px; background: #d5cfc0; border-radius: 2px; overflow: hidden; }
+  .progress-bar-inner { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
+  .progress-count { font-size: 13px; color: var(--accent); font-weight: 500; white-space: nowrap; min-width: 70px; text-align: right; }
+
+  .quiz-body { max-width: 860px; margin: 0 auto; padding: 60px 24px 100px; }
+
+  .station { margin-bottom: 64px; opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s ease forwards; }
+  .station:nth-child(1) { animation-delay: 0.1s; }
+  .station:nth-child(2) { animation-delay: 0.2s; }
+  .station:nth-child(3) { animation-delay: 0.3s; }
+  .station:nth-child(4) { animation-delay: 0.4s; }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+  .station-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 8px; }
+  .station-number { font-family: 'Playfair Display', serif; font-size: 3rem; color: #d5cfc0; line-height: 1; font-weight: 400; }
+  .station-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: var(--olive); }
+  .station-subtitle { font-size: 0.88rem; color: var(--muted); margin-bottom: 28px; padding-left: 2px; }
+  .station-divider { height: 1px; background: linear-gradient(to right, var(--accent), transparent); margin-bottom: 28px; width: 120px; }
+
+  .options-grid { display: flex; flex-direction: column; gap: 10px; }
+  .option-label { display: flex; align-items: flex-start; gap: 14px; background: var(--white); border: 1.5px solid #e2dbd0; border-radius: 10px; padding: 16px 20px; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s; }
+  .option-label:hover { border-color: var(--sage); background: #f8f5ef; transform: translateX(3px); }
+  .option-label.checked { border-color: var(--olive); background: #eef2ea; }
+  .option-label input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; min-width: 20px; border: 2px solid #c5bfb2; border-radius: 5px; margin-top: 2px; cursor: pointer; transition: background 0.2s, border-color 0.2s; position: relative; }
+  .option-label input[type="checkbox"]:checked { background: var(--olive); border-color: var(--olive); }
+  .option-label input[type="checkbox"]:checked::after { content: '✓'; position: absolute; color: white; font-size: 13px; top: -1px; left: 2px; font-weight: 700; }
+  .option-main { font-size: 0.95rem; color: var(--dark); font-weight: 400; line-height: 1.45; padding-top: 1px; }
+
+  .submit-zone { text-align: center; padding: 40px 0; }
+  .submit-btn { background: var(--dark); color: var(--cream); border: none; padding: 18px 52px; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 500; letter-spacing: 1px; border-radius: 4px; cursor: pointer; transition: background 0.2s, transform 0.15s; text-transform: uppercase; }
+  .submit-btn:hover { background: var(--olive); transform: translateY(-2px); }
+  .submit-hint { margin-top: 12px; font-size: 0.83rem; color: var(--muted); }
+
+  /* RESULTS */
+  #results { display: none; max-width: 860px; margin: 0 auto; padding: 0 24px 100px; }
+  #results.visible { display: block; }
+
+  .results-hero { background: var(--dark); color: var(--cream); padding: 60px 40px; border-radius: 12px; text-align: center; margin-bottom: 40px; position: relative; overflow: hidden; }
+  .results-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 80%, rgba(122,144,112,0.3) 0%, transparent 55%), radial-gradient(ellipse at 85% 15%, rgba(200,98,42,0.2) 0%, transparent 45%); }
+  .results-eyebrow { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--sage); margin-bottom: 24px; position: relative; }
+  .results-hero h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.4rem, 3vw, 2.2rem); font-weight: 400; line-height: 1.2; position: relative; margin-bottom: 40px; }
+  .stats-row { display: flex; justify-content: center; gap: 50px; flex-wrap: wrap; position: relative; }
+  .stat-block { text-align: center; }
+  .stat-number { font-family: 'Playfair Display', serif; font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 700; color: #fff; line-height: 1; display: block; }
+  .stat-number span.accent { color: var(--sage); }
+  .stat-label { font-size: 0.82rem; color: #a09a8e; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px; display: block; }
+
+  /* SAVE SECTION */
+  .save-section {
+    background: var(--white); border: 1.5px solid #e2dbd0;
+    border-radius: 12px; padding: 28px 32px; margin-bottom: 44px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 20px; flex-wrap: wrap;
+  }
+  .save-copy strong { display: block; font-size: 1rem; font-weight: 500; color: var(--dark); margin-bottom: 3px; }
+  .save-copy span { font-size: 0.85rem; color: var(--muted); }
+  .save-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+  .save-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 20px; border-radius: 6px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .save-btn-pdf { background: var(--dark); color: var(--cream); }
+  .save-btn-pdf:hover { background: var(--olive); transform: translateY(-1px); }
+  .save-btn-copy { background: var(--soft); color: var(--dark); border: 1.5px solid #d5cfc0; }
+  .save-btn-copy:hover { background: #ddd7c8; transform: translateY(-1px); }
+  .save-btn-copy.copied { background: #eef2ea; color: var(--olive); border-color: var(--olive); }
+
+  /* BREAKDOWN */
+  .breakdown-header { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 400; margin-bottom: 6px; color: var(--olive); }
+  .breakdown-sub { font-size: 0.88rem; color: var(--muted); margin-bottom: 24px; }
+  .breakdown-list { display: flex; flex-direction: column; gap: 10px; }
+  .breakdown-item { background: var(--white); border: 1.5px solid #e2dbd0; border-radius: 10px; padding: 16px 20px; display: grid; grid-template-columns: 1fr auto auto; gap: 8px 24px; align-items: center; opacity: 0; transform: translateY(12px); transition: opacity 0.35s ease, transform 0.35s ease; }
+  .breakdown-item.show { opacity: 1; transform: translateY(0); }
+  .bd-name { font-size: 0.93rem; color: var(--dark); }
+  .bd-animals { font-size: 0.85rem; color: var(--olive); font-weight: 500; white-space: nowrap; text-align: right; }
+  .bd-co2 { font-size: 0.85rem; color: var(--accent); font-weight: 500; white-space: nowrap; text-align: right; min-width: 90px; }
+  .bd-source { font-size: 0.75rem; color: var(--muted); grid-column: 1 / -1; font-style: italic; }
+
+  .retake-btn { margin: 48px auto 0; display: block; background: none; border: 2px solid var(--dark); color: var(--dark); padding: 14px 40px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; letter-spacing: 1px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
+  .retake-btn:hover { background: var(--dark); color: var(--cream); }
+
+  /* PRINT STYLES — only the results content */
+  @media print {
+    .hero, .progress-wrap, #quizBody, .save-section, .retake-btn { display: none !important; }
+    #results { display: block !important; padding: 0 !important; }
+    .results-hero { border-radius: 0; background: #1a1a14 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .breakdown-item { break-inside: avoid; opacity: 1 !important; transform: none !important; }
+    body { background: white; }
+  }
+
+  @media (max-width: 600px) {
+    .hero { padding: 60px 24px 48px; }
+    .progress-wrap { padding: 12px 20px; }
+    .stats-row { gap: 30px; }
+    .breakdown-item { grid-template-columns: 1fr; }
+    .bd-animals, .bd-co2 { text-align: left; }
+    .save-section { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <p class="hero-eyebrow">Impact Pledge Calculator</p>
+  <h1>What if your choices<br>could save <em>thousands</em> of lives?</h1>
+  <p class="hero-sub">Select the habits you're willing to commit to — then see your real, estimated annual impact.</p>
+</div>
+
+<div class="progress-wrap">
+  <span class="progress-label">Commitments</span>
+  <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+  <span class="progress-count" id="progressCount">0 selected</span>
+</div>
+
+<div class="quiz-body" id="quizBody">
+
+  <div class="station">
+    <div class="station-header"><span class="station-number">01</span><span class="station-title">Reduce harm &amp; improve animal lives</span></div>
+    <p class="station-subtitle">Choose the habits you're willing to adopt.</p>
+    <div class="station-divider"></div>
+    <div class="options-grid">
+      <label class="option-label"><input type="checkbox" data-id="2"><div class="option-main">Replace chicken with seitan in 3 meals/week</div></label>
+      <label class="option-label"><input type="checkbox" data-id="13"><div class="option-main">Donate €10/mo to Effective Altruism Top Charities (e.g., Animal Charity Evaluators)</div></label>
+      <label class="option-label"><input type="checkbox" data-id="8"><div class="option-main">Buy only "cage-free" (minimum) if buying non-vegan products</div></label>
+      <label class="option-label"><input type="checkbox" data-id="14"><div class="option-main">Replace leather items with cork or sustainable alternatives</div></label>
+      <label class="option-label"><input type="checkbox" data-id="24"><div class="option-main">Switch to vegan wine/beer (ensuring no isinglass is used)</div></label>
+      <label class="option-label"><input type="checkbox" data-id="3"><div class="option-main">Transition your dog to a nutritionally sound, vet-approved vegan kibble</div></label>
+    </div>
+  </div>
+
+  <div class="station">
+    <div class="station-header"><span class="station-number">02</span><span class="station-title">Shrink your carbon &amp; water footprint</span></div>
+    <p class="station-subtitle">Select the habits you're willing to adopt to reduce your environmental impact.</p>
+    <div class="station-divider"></div>
+    <div class="options-grid">
+      <label class="option-label"><input type="checkbox" data-id="1"><div class="option-main">Swap beef for beans/lentils/tofu in 3 meals/week</div></label>
+      <label class="option-label"><input type="checkbox" data-id="30"><div class="option-main">Commit to "Vegan Before 6 PM" (VB6)</div></label>
+      <label class="option-label"><input type="checkbox" data-id="5"><div class="option-main">Switch from dairy milk to oat milk (at least 1L/week)</div></label>
+      <label class="option-label"><input type="checkbox" data-id="26"><div class="option-main">Substitute butter with olive oil or a plant-based spread</div></label>
+      <label class="option-label"><input type="checkbox" data-id="12"><div class="option-main">Compost 100% of your organic food waste monthly</div></label>
+      <label class="option-label"><input type="checkbox" data-id="29"><div class="option-main">Choose bulk-buy grains over packaged goods to reduce plastic waste</div></label>
+    </div>
+  </div>
+
+  <div class="station">
+    <div class="station-header"><span class="station-number">03</span><span class="station-title">Fuel your body more efficiently</span></div>
+    <p class="station-subtitle">Select the habits you're willing to adopt to support your health.</p>
+    <div class="station-divider"></div>
+    <div class="options-grid">
+      <label class="option-label"><input type="checkbox" data-id="6"><div class="option-main">Limit eggs to a max of 7 per week (WHO guideline)</div></label>
+      <label class="option-label"><input type="checkbox" data-id="lim_proc"><div class="option-main">Limit processed meat consumption to no more than 1 meal per week</div></label>
+      <label class="option-label"><input type="checkbox" data-id="21"><div class="option-main">Replace fish oil with algae-based Omega-3</div></label>
+      <label class="option-label"><input type="checkbox" data-id="9"><div class="option-main">Replace hard cheese with a nutritional yeast/cashew alternative for healthier fats</div></label>
+      <label class="option-label"><input type="checkbox" data-id="18"><div class="option-main">Host 1 fully vegan dinner for 4 friends monthly to share healthy plant-based meals</div></label>
+      <label class="option-label"><input type="checkbox" data-id="27"><div class="option-main">Advocate for 1 reliable vegan option at your workplace and/or university</div></label>
+    </div>
+  </div>
+
+  <div class="station">
+    <div class="station-header"><span class="station-number">04</span><span class="station-title">Reduce waste &amp; distribution inefficiencies</span></div>
+    <p class="station-subtitle">Select the habits you're willing to adopt to support smarter food production and distribution.</p>
+    <div class="station-divider"></div>
+    <div class="options-grid">
+      <label class="option-label"><input type="checkbox" data-id="food_rescue"><div class="option-main">Use the 'Too Good To Go' or 'Share Food' app to rescue food waste</div></label>
+      <label class="option-label"><input type="checkbox" data-id="5b"><div class="option-main">Switch from dairy milk to oat milk (at least 1L/week) to reduce resource-heavy supply chains</div></label>
+      <label class="option-label"><input type="checkbox" data-id="25"><div class="option-main">Eat locally based foods to cut down on transportation emissions</div></label>
+      <label class="option-label"><input type="checkbox" data-id="frozen_veg"><div class="option-main">Buy frozen fruits + vegetables if not in season to reduce supply chain waste</div></label>
+      <label class="option-label"><input type="checkbox" data-id="pbu"><div class="option-main">Support the "Plant-Based Universities" campaign</div></label>
+      <label class="option-label"><input type="checkbox" data-id="29b"><div class="option-main">Choose bulk-buy grains over packaged goods to reduce plastic waste</div></label>
+    </div>
+  </div>
+
+  <div class="submit-zone">
+    <button class="submit-btn" onclick="calculateImpact()">See My Impact →</button>
+    <p class="submit-hint">Based on peer-reviewed estimates from Oxford, ACE, Fishcount &amp; others</p>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+
+  <div class="results-hero">
+    <p class="results-eyebrow">Your Estimated Annual Impact</p>
+    <h2>By committing to these pledges, you will save at least…</h2>
+    <div class="stats-row">
+      <div class="stat-block">
+        <span class="stat-number" id="totalAnimals">—</span>
+        <span class="stat-label">Animals &amp; sentient lives</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-number" id="totalCO2">—</span>
+        <span class="stat-label">kg CO₂e per year</span>
+      </div>
+      <div class="stat-block">
+        <span class="stat-number" id="totalPledges">—</span>
+        <span class="stat-label">Commitments made</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-section">
+    <div class="save-copy">
+      <strong>Keep a copy of your pledges</strong>
+      <span>Save as PDF or copy the text — no account needed.</span>
+    </div>
+    <div class="save-buttons">
+      <button class="save-btn save-btn-pdf" onclick="savePDF()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Save as PDF
+      </button>
+      <button class="save-btn save-btn-copy" id="copyBtn" onclick="copyText()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy text
+      </button>
+    </div>
+  </div>
+
+  <h3 class="breakdown-header">Breakdown by commitment</h3>
+  <p class="breakdown-sub">Each row shows the estimated minimum annual impact of that single action.</p>
+  <div class="breakdown-list" id="breakdownList"></div>
+
+  <button class="retake-btn" onclick="retake()">← Revise my pledges</button>
+</div>
+
+<script>
+const IMPACT = {
+  "1":          { label: "Swap beef for beans/lentils/tofu in 3 meals/week",           animals: 0.05, co2: 450,  animalLabel: "<0.1 cows",          co2Label: "~450 kg",   source: "Oxford/EWG",      why: "Beef is the 'low-hanging fruit' for climate due to methane." },
+  "2":          { label: "Replace chicken with seitan in 3 meals/week",                 animals: 15,   co2: 50,   animalLabel: "~15 birds",          co2Label: "~50 kg",    source: "ACE",             why: "Chickens are the most numerous land animals in factory farms." },
+  "3":          { label: "Transition dog to vet-approved vegan kibble",                  animals: 13,   co2: 1000, animalLabel: "~13 animals",        co2Label: "~1,000 kg", source: "PLOS One",        why: "Pets consume ~25–30% of total meat-derived calories in the US." },
+  "5":          { label: "Switch from dairy milk to oat milk (1L/week)",                 animals: 0,    co2: 150,  animalLabel: "Negligible",         co2Label: "~150 kg",   source: "Statista/Clark",  why: "Dairy involves water-intensive production and calf-separation suffering." },
+  "5b":         { label: "Switch to oat milk to reduce resource-heavy supply chains",    animals: 0,    co2: 150,  animalLabel: "Negligible",         co2Label: "~150 kg",   source: "Statista/Clark",  why: "Reduces demand on resource-heavy dairy supply chains." },
+  "6":          { label: "Limit eggs to a max of 7 per week",                            animals: 1.5,  co2: 20,   animalLabel: "~1.5 hens",          co2Label: "~20 kg",    source: "PMC 2026",        why: "Eliminates demand for male-chick culling in the egg industry." },
+  "8":          { label: "Buy only cage-free if purchasing non-vegan products",          animals: 0,    co2: 0,    animalLabel: "Welfare shift",       co2Label: "0 kg",      source: "EA Forum",        why: "Targeted welfare reform is the most tractable mid-step." },
+  "9":          { label: "Replace hard cheese with nutritional yeast/cashew",            animals: 0,    co2: 100,  animalLabel: "Negligible",         co2Label: "~100 kg",   source: "EWG",             why: "Cheese is the 3rd highest emitter after beef and lamb." },
+  "12":         { label: "Compost 100% of food waste monthly",                           animals: 0,    co2: 200,  animalLabel: "0 direct",           co2Label: "~200 kg",   source: "8 Billion Trees", why: "Landfill methane from food waste is a massive 'hidden' cost." },
+  "13":         { label: "Donate €10/mo to Effective Altruism Top Charities",            animals: 200,  co2: 0,    animalLabel: "200+ animals",       co2Label: "Variable",  source: "Farmkind/EA",     why: "Direct funding to policy groups saves more lives than individual boycotts." },
+  "14":         { label: "Replace leather items with synthetic/cork alternatives",       animals: 0.1,  co2: 15,   animalLabel: "~0.1 cows",          co2Label: "~15 kg",    source: "Ecologic Inst.",  why: "Leather is a primary co-product that subsidizes beef prices." },
+  "18":         { label: "Host 1 vegan dinner for 4 friends monthly",                    animals: 5,    co2: 40,   animalLabel: "~5 animals",         co2Label: "~40 kg",    source: "GFI",             why: "Social proofing scales your impact beyond your own plate." },
+  "21":         { label: "Replace fish oil with algae-based Omega-3",                    animals: 500,  co2: 10,   animalLabel: "500+ fish",          co2Label: "Low",       source: "Fishcount",       why: "Algae is the original source; fish oil is just 'filtered' through fish." },
+  "24":         { label: "Switch to vegan wine/beer (no isinglass)",                     animals: 0,    co2: 0,    animalLabel: "Fish bladder elim.", co2Label: "Negligible",source: "New Roots",       why: "Prevents use of fish bladders (isinglass) in filtration." },
+  "25":         { label: "Eat locally based foods (cut transportation emissions)",        animals: 0,    co2: 50,   animalLabel: "0 direct",           co2Label: "~50 kg",    source: "UNFCCC",          why: "Reduces greenhouse-heated warehouse and cold-chain costs." },
+  "26":         { label: "Substitute butter with olive oil or plant-based spread",       animals: 0,    co2: 80,   animalLabel: "Negligible",         co2Label: "~80 kg",    source: "EWG",             why: "Butter has an incredibly high carbon footprint per calorie." },
+  "27":         { label: "Advocate for 1 vegan option at workplace/university",          animals: 50,   co2: 500,  animalLabel: "50+ lives",          co2Label: "~500 kg",   source: "EA Forum",        why: "Policy change at institutional level is highest leverage." },
+  "29":         { label: "Choose bulk-buy grains over packaged goods",                   animals: 0,    co2: 25,   animalLabel: "0 direct",           co2Label: "~25 kg",    source: "UNFCCC",          why: "Packaging accounts for 5.4% of total food-related emissions." },
+  "29b":        { label: "Choose bulk-buy grains to reduce plastic waste",               animals: 0,    co2: 25,   animalLabel: "0 direct",           co2Label: "~25 kg",    source: "UNFCCC",          why: "Packaging accounts for 5.4% of total food-related emissions." },
+  "30":         { label: "Commit to 'Vegan Before 6 PM' (VB6)",                         animals: 40,   co2: 800,  animalLabel: "~40 animals",        co2Label: "~800 kg",   source: "8 Billion Trees", why: "A manageable way to cut ~2/3 of total personal impact." },
+  "lim_proc":   { label: "Limit processed meat to no more than 1 meal/week",            animals: 0.3,  co2: 60,   animalLabel: "~0.3 animals est.",  co2Label: "~60 kg",    source: "WHO/EWG",         why: "Reduces demand for factory-farmed pork and beef-derived products." },
+  "food_rescue":{ label: "Use 'Too Good To Go' / 'Share Food' to rescue food waste",    animals: 0,    co2: 75,   animalLabel: "0 direct",           co2Label: "~75 kg",    source: "WRAP/UNFCCC",     why: "Food rescue directly prevents landfill methane at point of waste." },
+  "frozen_veg": { label: "Buy frozen fruits & vegetables if not in season",             animals: 0,    co2: 40,   animalLabel: "0 direct",           co2Label: "~40 kg",    source: "Carbon Trust",    why: "Frozen avoids air freight and cold-chain losses of fresh produce." },
+  "pbu":        { label: "Support the 'Plant-Based Universities' campaign",              animals: 0,    co2: 0,    animalLabel: "Systemic",           co2Label: "Systemic",  source: "PBU/EA Forum",    why: "Institutional food-system change reaches thousands of students." },
+};
+
+const TOTAL_OPTIONS = document.querySelectorAll('input[type="checkbox"]').length;
+let cachedRows = [];
+let cachedTotals = { animals: 0, co2: 0, pledges: 0 };
+
+function getCheckedIds() {
+  return [...document.querySelectorAll('input[type="checkbox"]:checked')].map(el => el.dataset.id);
+}
+
+document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+  cb.addEventListener('change', () => {
+    const lbl = cb.closest('.option-label');
+    cb.checked ? lbl.classList.add('checked') : lbl.classList.remove('checked');
+    const n = getCheckedIds().length;
+    document.getElementById('progressBar').style.width = (n / TOTAL_OPTIONS * 100) + '%';
+    document.getElementById('progressCount').textContent = n === 1 ? '1 selected' : n + ' selected';
+  });
+});
+
+function formatAnimals(n) {
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k+';
+  if (n >= 100) return Math.round(n) + '+';
+  if (n < 1 && n > 0) return '<1';
+  return Math.round(n) + '+';
+}
+
+function calculateImpact() {
+  const ids = getCheckedIds();
+  if (ids.length === 0) { alert('Please select at least one commitment first!'); return; }
+
+  const seen = new Set();
+  const deduped = ids.map(id => (id === '5b') ? '5' : (id === '29b') ? '29' : id)
+                     .filter(id => { if (seen.has(id)) return false; seen.add(id); return true; });
+
+  let totalAnimals = 0, totalCO2 = 0;
+  cachedRows = [];
+
+  deduped.forEach(id => {
+    const d = IMPACT[id];
+    if (!d) return;
+    totalAnimals += d.animals;
+    totalCO2 += d.co2;
+    cachedRows.push(d);
+  });
+
+  cachedTotals = { animals: totalAnimals, co2: totalCO2, pledges: ids.length };
+
+  document.getElementById('totalAnimals').innerHTML = formatAnimals(totalAnimals) + '<span class="accent"> lives</span>';
+  document.getElementById('totalCO2').innerHTML = Math.round(totalCO2).toLocaleString() + '<span class="accent"> kg</span>';
+  document.getElementById('totalPledges').innerHTML = ids.length + '<span class="accent"> habits</span>';
+
+  const list = document.getElementById('breakdownList');
+  list.innerHTML = '';
+  cachedRows.forEach((d, i) => {
+    const item = document.createElement('div');
+    item.className = 'breakdown-item';
+    item.innerHTML = `
+      <div class="bd-name">${d.label}</div>
+      <div class="bd-animals">🐾 ${d.animalLabel}</div>
+      <div class="bd-co2">🌿 ${d.co2Label}</div>
+      <div class="bd-source"><em>${d.why}</em> — Source: ${d.source}</div>
+    `;
+    list.appendChild(item);
+    setTimeout(() => item.classList.add('show'), 80 + i * 60);
+  });
+
+  document.getElementById('quizBody').style.display = 'none';
+  const resultsEl = document.getElementById('results');
+  resultsEl.classList.add('visible');
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function savePDF() {
+  window.print();
+}
+
+function buildPlainText() {
+  const { animals, co2, pledges } = cachedTotals;
+  let t = 'MY IMPACT PLEDGE — Annual Estimates\n';
+  t += '=====================================\n\n';
+  t += 'Estimated lives saved:   ' + formatAnimals(animals) + ' animals/year\n';
+  t += 'Estimated CO2 avoided:   ' + Math.round(co2).toLocaleString() + ' kg CO2e/year\n';
+  t += 'Total commitments:       ' + pledges + '\n\n';
+  t += 'BREAKDOWN:\n----------\n';
+  cachedRows.forEach(d => {
+    t += '\n• ' + d.label + '\n';
+    t += '  Animals: ' + d.animalLabel + ' | CO2: ' + d.co2Label + '\n';
+    t += '  ' + d.why + ' (Source: ' + d.source + ')\n';
+  });
+  t += '\n=====================================\n';
+  t += 'Sources: Oxford, ACE, Fishcount, EWG, EA Forum & others.\n';
+  return t;
+}
+
+function copyText() {
+  const btn = document.getElementById('copyBtn');
+  navigator.clipboard.writeText(buildPlainText()).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy text';
+    }, 2500);
+  });
+}
+
+function retake() {
+  document.getElementById('quizBody').style.display = 'block';
+  document.getElementById('results').classList.remove('visible');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
